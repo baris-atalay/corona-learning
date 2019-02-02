@@ -77,7 +77,7 @@ background.y = display.contentCenterY
 ship = display.newImageRect(mainGroup, objectSheet, 4, 98, 79)
 ship.x = display.contentCenterX
 ship.y = display.contentHeight - 100
-physics.addBody(ship, { radius= 30, isSensor=true })
+physics.addBody(ship, { radius = 30, isSensor = true })
 ship.Myname = 'ship'
 
 livesText = display.newText(uiGroup, 'Lives: ' .. lives, 200, 80, native.systemFont, 36)
@@ -89,3 +89,56 @@ local function updateText()
   livesText.text = 'Lives: ' .. lives
   scoreText.text = 'Score: ' .. score
 end
+
+local function createAsteroid()
+  local newAsteroid = display.newImageRect(mainGroup, objectSheet, 1, 102, 85)
+  
+  table.insert(asteroidTable, newAsteroid)
+  physics.addBody(newAsteroid, { radius = 40, bounce = 0.8 })
+  newAsteroid.myName = 'Asteroid'
+
+  local whereFrom = math.random(3)
+
+  if (whereFrom == 1) then
+    newAsteroid.x = -60
+    newAsteroid.y = math.random(display.contentHeight / 2.5)
+    newAsteroid:setLinearVelociy(math.random(40, 120), math.random(20, 60))
+  elseif (whereFrom == 2) then
+    newAsteroid.x = math.random(display.contentWidth)
+    newAsteroid.y = -60
+    newAsteroid:setLinearVelociy(math.random(-40, 40), math.random(40, 120))
+  elseif (whereFrom == 3) then
+    newAsteroid.x = display.contentWidth + 60
+    newAsteroid.y = math.random(display.contentHeight / 2.5)
+    newAsteroid:setLinearVelociy(math.random(-40, -120), math.random(20, 60))
+  end
+
+  newAsteroid:applyTorque(math.random(-6, 6))
+end
+
+local function fireLaser()
+  local newLaser = display.newImageRect(mainGroup, objectSheet, 5, 14, 40)
+  
+  physics.addBody(newLaser, { isSensor=true })
+  newLaser.isBullet = true
+  newLaser.myName = 'Laser'
+
+  newLaser.x = ship.x
+  newLaser.y = ship.y
+  newLaser:toBack()
+
+  transition.to(newLaser, {
+    y = -40,
+    time = 500,
+    onComplete = function()
+      display.remove(newLaser)
+    end
+  })
+end
+
+local function dragShip(event)
+  local ship = event.target
+  local phas = event.phase
+end
+
+ship:addEventListener('tap', fireLaser)
