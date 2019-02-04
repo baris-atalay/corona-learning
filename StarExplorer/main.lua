@@ -61,7 +61,7 @@ local died = false
 local asteroidTable = {}
 
 local ship
-local gameLoopTime
+local gameLoopTimer
 local livesText
 local scoreText
 
@@ -102,15 +102,15 @@ local function createAsteroid()
   if (whereFrom == 1) then
     newAsteroid.x = -60
     newAsteroid.y = math.random(display.contentHeight / 2.5)
-    newAsteroid:setLinearVelociy(math.random(40, 120), math.random(20, 60))
+    newAsteroid:setLinearVelocity(math.random(40, 120), math.random(20, 60))
   elseif (whereFrom == 2) then
     newAsteroid.x = math.random(display.contentWidth)
     newAsteroid.y = -60
-    newAsteroid:setLinearVelociy(math.random(-40, 40), math.random(40, 120))
+    newAsteroid:setLinearVelocity(math.random(-40, 40), math.random(40, 120))
   elseif (whereFrom == 3) then
     newAsteroid.x = display.contentWidth + 60
     newAsteroid.y = math.random(display.contentHeight / 2.5)
-    newAsteroid:setLinearVelociy(math.random(-40, -120), math.random(20, 60))
+    newAsteroid:setLinearVelocity(math.random(-120, -40), math.random(20, 60))
   end
 
   newAsteroid:applyTorque(math.random(-6, 6))
@@ -138,7 +138,38 @@ end
 
 local function dragShip(event)
   local ship = event.target
-  local phas = event.phase
+  local phase = event.phase
+
+  if (phase == 'began') then
+    display.currentStage:setFocus(ship)
+    ship.touchOffsetX = event.x - ship.x
+
+  elseif (phase == 'moved') then
+    ship.x = event.x - ship.touchOffsetX
+
+  elseif (phase == 'ended' or phase == 'cancelled') then
+    display.currentStage:setFocus(nil)
+  end
+
+  return true
+end
+
+local function gameLoop()
+  createAsteroid()
+
+  for i = #asteroidTable, 1, -1 do
+    local asteroid = asteroidTable[i]
+
+    if (
+      asteroid.x < -100 or asteroid.x > display.contentWidth + 100 or
+      asteroid.y < - 100 or asteroid.y > display.contentHeight + 100
+    ) then
+      display.remove(asteroid)
+      table.remove(asteroidTable, i)
+    end
+  end
 end
 
 ship:addEventListener('tap', fireLaser)
+ship:addEventListener('touch', dragShip)
+gameLoopTimer = timer.performWithDelay(500, gameLoop, 0)
