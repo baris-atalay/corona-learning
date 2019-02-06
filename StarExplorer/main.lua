@@ -78,7 +78,7 @@ ship = display.newImageRect(mainGroup, objectSheet, 4, 98, 79)
 ship.x = display.contentCenterX
 ship.y = display.contentHeight - 100
 physics.addBody(ship, { radius = 30, isSensor = true })
-ship.Myname = 'ship'
+ship.myName = 'Ship'
 
 livesText = display.newText(uiGroup, 'Lives: ' .. lives, 200, 80, native.systemFont, 36)
 scoreText = display.newText(uiGroup, 'Score: ' .. score, 400, 80, native.systemFont, 36)
@@ -170,6 +170,79 @@ local function gameLoop()
   end
 end
 
+local function restoreShip()
+  ship.isBodyActive = false
+  ship.x = display.contentCenterX
+  ship.y = display.contentHeight - 100
+
+  transition.to( ship, {
+    alpha = 1,
+    time = 4000,
+    onComplete = function()
+      ship.isBodyActive = true
+      died = false
+    end
+  })
+end
+
+local function handleAsteroidLaserCollision(obj1, obj2)
+  if(
+    (obj1.myName == 'Asteroid' and obj2.myName == 'Laser')
+    or
+    (obj2.myName == 'Asteroid' and obj1.myName == 'Laser') 
+  ) then
+    display.remove(obj1)
+    display.remove(obj2)
+
+    for i = #asteroidTable, 1, -1 do
+      local asteroid = asteroidTable[i]
+
+      if(asteroid == obj1 or asteroid == obj2) then
+        table.remove(asteroidTable, i)
+        break
+      end
+    end
+
+    score = score + 100
+    scoreText.text = "Score: " .. score
+  end
+end
+
+local function handleAsteroidShipCollision(obj1, obj2)
+  print(obj1.myName, obj2.myName)
+  if(
+    (obj1.myName == 'Asteroid' and obj2.myName == 'Ship')
+    or
+    (obj2.myName == 'Asteroid' and obj1.myName == 'Ship') 
+  ) then
+
+    if (died == false) then
+      died = true
+      lives = lives -1
+      livesText.text = 'Lives: ' .. lives
+      
+      if (lives == 0) then
+        display.remove(ship)
+      else
+        ship.alpha = 0
+        timer.performWithDelay(1000, restoreShip)
+      end
+    end
+  end
+end
+
+local function onCollision(event)
+  if (event.phase == "began") then
+    local obj1 = event.object1
+    local obj2 = event.object2
+
+    handleAsteroidLaserCollision(obj1, obj2)
+    handleAsteroidShipCollision(obj1, obj2)
+
+  end
+end
+
 ship:addEventListener('tap', fireLaser)
 ship:addEventListener('touch', dragShip)
-gameLoopTimer = timer.performWithDelay(500, gameLoop, 0)
+gameLoopTimer = timer.performWithDelay(1000, gameLoop, 0)
+Runtime:addEventListener('collision', onCollision)
