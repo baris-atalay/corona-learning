@@ -61,7 +61,7 @@ local sheetOptions = {
 local objectSheet = graphics.newImageSheet('gameObjects.png', sheetOptions)
 
 -- Initialize variables
-local lives = 1
+local lives = 2
 local score = 0
 local died = false
 
@@ -309,7 +309,7 @@ function scene:show( event )
 
     physics.start()
     Runtime:addEventListener('collision', onCollision)
-    gameLoopTimer = timer.performWithDelay(1000, gameLoop, 0)
+    gameLoopTimer = timer.performWithDelay(500, gameLoop, 0)
     audio.play(musicTrack, { channel=1, loops=-1 })
 	end
 end
